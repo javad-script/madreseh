@@ -1,0 +1,131 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model attendance {
+  id                 Int                  @id @default(autoincrement())
+  class_id           Int?
+  teacher_id         Int?
+  date               DateTime?            @db.Date
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  class_rooms        class_rooms?         @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users              users?               @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  attendance_student attendance_student[] @ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model attendance_student {
+  attendance_id Int?
+  student_id    Int?
+  status        attendance_status?
+  late_minutes  Int?
+  note          String?            @db.VarChar
+  attendance    attendance?        @relation(fields: [attendance_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users         users?             @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@ignore
+}
+
+model class_rooms {
+  id            Int             @id @default(autoincrement())
+  name          String?         @db.VarChar
+  grade         String?         @db.VarChar
+  school_id     Int?
+  created_at    DateTime?       @default(now()) @db.Timestamp(6)
+  attendance    attendance[]
+  schools       schools?        @relation(fields: [school_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  class_student class_student[] @ignore
+  class_teacher class_teacher[] @ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model class_student {
+  class_id    Int?
+  student_id  Int?
+  joined_at   DateTime?    @default(now()) @db.Timestamp(6)
+  class_rooms class_rooms? @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users?       @relation(fields: [student_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@ignore
+}
+
+/// The underlying table does not contain a valid unique identifier and can therefore currently not be handled by Prisma Client.
+model class_teacher {
+  class_id    Int?
+  teacher_id  Int?
+  class_rooms class_rooms? @relation(fields: [class_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  users       users?       @relation(fields: [teacher_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  @@ignore
+}
+
+model schools {
+  id          Int           @id @default(autoincrement())
+  name        String?       @db.VarChar
+  address     String?       @db.VarChar
+  code        String?       @unique @db.VarChar
+  created_at  DateTime?     @default(now()) @db.Timestamp(6)
+  class_rooms class_rooms[]
+  users       users[]
+}
+
+/// This model or at least one of its fields has comments in the database, and requires an additional setup for migrations: Read more: https://pris.ly/d/database-comments
+model users {
+  id                 Int                  @id @default(autoincrement())
+  first_name         String?              @db.VarChar
+  last_name          String?              @db.VarChar
+  phone              String?              @unique @db.VarChar
+  email              String?              @unique @db.VarChar
+  role               role?
+  school_id          Int?
+  username           String?              @unique @db.VarChar
+  password           String?              @db.VarChar
+  created_at         DateTime?            @default(now()) @db.Timestamp(6)
+  birth_date         DateTime?            @db.Date
+  national_code      String?              @unique @db.VarChar
+  address            String?              @db.VarChar
+  house_phone        String?              @db.VarChar
+  emergency_phone    String?              @db.VarChar
+  parent_id          Int?
+  father_phone       String?              @db.VarChar
+  father_email       String?              @db.VarChar
+  father_education   String?              @db.VarChar
+  father_job         String?              @db.VarChar
+  father_job_address String?              @db.VarChar
+  father_job_phone   String?              @db.VarChar
+  mother_phone       String?              @db.VarChar
+  mother_email       String?              @db.VarChar
+  mother_education   String?              @db.VarChar
+  mother_job         String?              @db.VarChar
+  mother_job_address String?              @db.VarChar
+  mother_job_phone   String?              @db.VarChar
+  attendance         attendance[]
+  attendance_student attendance_student[] @ignore
+  class_student      class_student[]      @ignore
+  class_teacher      class_teacher[]      @ignore
+  users              users?               @relation("usersTousers", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_users        users[]              @relation("usersTousers")
+  schools            schools?             @relation(fields: [school_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+enum attendance_status {
+  PRESENT
+  ABSENT
+  LATE
+  EXCUSED
+}
+
+enum role {
+  STUDENT
+  TEACHER
+  PARENT
+  ADMINISTRATIVE_STAFF
+  MANAGEMENT_STAFF
+}
