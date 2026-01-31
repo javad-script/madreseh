@@ -1,0 +1,13 @@
+# Don't format these folders
+node_modules
+.next
+build
+components/ui
+assets
+public
+
+# Don't format these files
+package-lock.json
+yarn.lock
+.env
+.env.local
